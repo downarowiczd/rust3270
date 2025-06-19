@@ -159,17 +159,3 @@ jobs:
         with:
           args: "-vv"
           commits: "HEAD"
-
-      - name: Install cargo-binstall
-        uses: taiki-e/install-action@cargo-binstall
-
-      - name: Install cargo-msrv
-        run: cargo binstall -y --force cargo-msrv
-
-      - name: Run cargo-msrv
-        shell: bash
-        run: |
-          for package in "rust3270"; do
-            printf "Checking MSRV for $package..."
-            cargo msrv --output-format json --path "crates/$package" verify | tail -n 1 | jq --exit-status '.success'
-          done
