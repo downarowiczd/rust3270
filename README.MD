@@ -1,6 +1,13 @@
-# rust3270 [![CI](https://github.com/downarowiczd/rust3270/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/downarowiczd/rust3270/actions/workflows/ci.yml)
+<div align="center">
+
+# rust3270
+
+[![Build status](https://github.com/downarowiczd/rust3270/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/downarowiczd/rust3270/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/rust3270.svg)](https://crates.io/crates/rust3270)
+[![dependency status](https://deps.rs/repo/github/downarowiczd/rust3270/status.svg)](https://deps.rs/repo/github/downarowiczd/rust3270)
 
 rust3270 is a terminal server implementation for the IBM 3270 terminal protocol, written in Rust.
+</div>
 
 ## Usage
 
