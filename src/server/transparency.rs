@@ -28,7 +28,7 @@ impl TryFrom<u8> for Transparency {
             0xF0 => Transparency::Or,
             0xF1 => Transparency::Xor,
             0xF2 => Transparency::Opaque,
-            _ => return Err(StreamFormatError::InvalidData)
+            _ => return Err(StreamFormatError::InvalidData),
         })
     }
 }

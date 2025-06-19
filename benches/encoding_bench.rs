@@ -1,8 +1,8 @@
 #![feature(test)]
 
 extern crate test;
+use rust3270::encoding::{Encoding, decode_to_ascii, encode_ascii_to};
 use test::Bencher;
-use rust3270::encoding::{encode_ascii_to, decode_to_ascii, Encoding};
 
 fn sample_ascii_string() -> String {
     // 10,000 ASCII characters

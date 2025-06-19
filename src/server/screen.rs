@@ -1,9 +1,13 @@
+use snafu::{ResultExt, Snafu};
+
+use crate::server::Session;
 use crate::server::aid::AID;
 use crate::server::extended_field_attributes::ExtendedFieldAttribute;
-use crate::server::wcc::{WCC, FieldAttribute};
-use crate::server::stream::{WriteCommand, WriteCommandCode, WriteOrder, BufferAddressCalculator, StreamFormatError, IncomingRecord};
-use crate::server::Session;
-use snafu::{Snafu, ResultExt};
+use crate::server::stream::{
+    BufferAddressCalculator, IncomingRecord, StreamFormatError, WriteCommand, WriteCommandCode,
+    WriteOrder,
+};
+use crate::server::wcc::{FieldAttribute, WCC};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Address {
@@ -25,7 +29,7 @@ impl<'a> AsRef<str> for FieldData<'a> {
     }
 }
 
-pub struct  Field<'a> {
+pub struct Field<'a> {
     pub address: Address,
     pub attrs: Vec<ExtendedFieldAttribute>,
     pub data: FieldData<'a>,
@@ -33,30 +37,16 @@ pub struct  Field<'a> {
 
 impl Field<'static> {
     pub fn at(row: u16, col: u16) -> Self {
-        Self {
-            address: Address {row, col},
-            attrs: vec![],
-            data: FieldData::RO(""),
-        }
+        Self { address: Address { row, col }, attrs: vec![], data: FieldData::RO("") }
     }
-
 }
 impl<'a> Field<'a> {
-
     pub fn ro_text<'b>(self, text: &'b str) -> Field<'b> {
-        Field {
-            address: self.address,
-            attrs: self.attrs,
-            data: FieldData::RO(text),
-        }
+        Field { address: self.address, attrs: self.attrs, data: FieldData::RO(text) }
     }
 
     pub fn rw_text<'b>(self, text: &'b mut String) -> Field<'b> {
-        Field {
-            address: self.address,
-            attrs: self.attrs,
-            data: FieldData::RW(text),
-        }
+        Field { address: self.address, attrs: self.attrs, data: FieldData::RW(text) }
     }
 
     pub fn with_attr(mut self, attr: ExtendedFieldAttribute) -> Self {
@@ -82,16 +72,15 @@ pub enum ScreenError {
 
 impl<'a> Screen<'a> {
     pub fn present(&mut self, session: &mut Session) -> Result<Response, ScreenError> {
-        let acalc = BufferAddressCalculator {
-            width: 80,
-            height: 24,
-        };
+        let acalc = BufferAddressCalculator { width: 80, height: 24 };
 
         {
             let command = WriteCommand {
                 command: WriteCommandCode::EraseWrite,
                 wcc: WCC::RESET_MDT | WCC::KBD_RESTORE,
-                orders: self.fields.iter()
+                orders: self
+                    .fields
+                    .iter()
                     .flat_map(|field| {
                         use std::iter::*;
                         let Address { row, col } = field.address;
@@ -108,32 +97,36 @@ impl<'a> Screen<'a> {
                             }
                         }
                         if !have_fa {
-                            field_attr.insert(0, ExtendedFieldAttribute::FieldAttribute(if ro {
-                                FieldAttribute::PROTECTED
-                            } else {
-                                FieldAttribute::NONE
-                            }));
+                            field_attr.insert(
+                                0,
+                                ExtendedFieldAttribute::FieldAttribute(if ro {
+                                    FieldAttribute::PROTECTED
+                                } else {
+                                    FieldAttribute::NONE
+                                }),
+                            );
                         }
 
                         vec![
                             WriteOrder::SetBufferAddress(bufaddr),
                             WriteOrder::StartFieldExtended(field_attr),
-                            WriteOrder::SendText(field.data.as_ref().to_owned()) ,
+                            WriteOrder::SendText(field.data.as_ref().to_owned()),
                             WriteOrder::StartField(FieldAttribute::PROTECTED),
-                        ].into_iter()
+                        ]
+                        .into_iter()
                     })
-                    .collect()
+                    .collect(),
             };
             //debug_msg!("Sending command: {:#?}", &command);
             session.send_record(&command).context(IoSnafu { context: "Failed to send screen" })?;
         }
 
-        let response = session.receive_record(None)
+        let response = session
+            .receive_record(None)
             .context(IoSnafu { context: "Failed to read response" })?
             .unwrap(); // We can't get a None if we don't have a timeout
 
-        let incoming = IncomingRecord::parse_record(response.as_slice())
-            .context(StreamSnafu)?;
+        let incoming = IncomingRecord::parse_record(response.as_slice()).context(StreamSnafu)?;
 
         //debug_msg!("Received: {:?}", incoming);
 
@@ -146,22 +139,21 @@ impl<'a> Screen<'a> {
                 WriteOrder::SendText(text) => {
                     // TODO: Handle text that comes as multiple orders
                     for field in self.fields.iter_mut() {
-                        if acalc.encode_address(field.address.row, field.address.col) == incoming_addr - 1 {
+                        if acalc.encode_address(field.address.row, field.address.col)
+                            == incoming_addr - 1
+                        {
                             if let FieldData::RW(ref mut data) = field.data {
                                 **data = text.clone();
                             }
                         }
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
 
         let (row, col) = acalc.decode_address(incoming.addr);
 
-        Ok(Response {
-            address: Address{ row, col },
-            aid: incoming.aid,
-        })
+        Ok(Response { address: Address { row, col }, aid: incoming.aid })
     }
 }

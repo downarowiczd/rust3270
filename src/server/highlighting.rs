@@ -19,7 +19,7 @@ impl TryFrom<u8> for Highlighting {
             0xF1 => Highlighting::Blink,
             0xF2 => Highlighting::Reverse,
             0xF4 => Highlighting::Underscore,
-            _ => return Err(StreamFormatError::InvalidData)
+            _ => return Err(StreamFormatError::InvalidData),
         })
     }
 }

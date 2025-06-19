@@ -1,5 +1,6 @@
+use std::convert::TryFrom;
 use std::io::Write;
-use std::convert::{TryFrom};
+
 use snafu::{Snafu, ensure};
 
 use crate::encoding::Encoding;
@@ -10,13 +11,12 @@ use crate::server::wcc::{FieldAttribute, WCC};
 #[derive(Clone, Debug, Snafu, Eq, PartialEq)]
 pub enum StreamFormatError {
     #[snafu(display("Invalid AID: {:02x}", aid))]
-    InvalidAID { aid: u8, },
+    InvalidAID { aid: u8 },
     #[snafu(display("Record ended early"))]
     UnexpectedEOR,
     #[snafu(display("Invalid data"))]
     InvalidData,
 }
-
 
 pub trait OutputRecord {
     type Response;
@@ -88,7 +88,6 @@ pub enum WriteOrder {
 }
 
 impl WriteOrder {
-
     pub fn serialize(&self, output: &mut Vec<u8>) {
         match self {
             WriteOrder::StartField(attr) => output.extend_from_slice(&[0x1D, attr.bits()]),
@@ -98,7 +97,9 @@ impl WriteOrder {
                     attr.encode_into(&mut *output);
                 }
             }
-            WriteOrder::SetBufferAddress(addr) => output.extend_from_slice(&[0x11, (addr >> 8) as u8, (addr & 0xff) as u8]),
+            WriteOrder::SetBufferAddress(addr) => {
+                output.extend_from_slice(&[0x11, (addr >> 8) as u8, (addr & 0xff) as u8])
+            }
             WriteOrder::SetAttribute(attr) => {
                 let (typ, val) = attr.clone().encoded();
                 output.extend_from_slice(&[0x28, typ, val]);
@@ -106,14 +107,19 @@ impl WriteOrder {
             WriteOrder::ModifyField(attrs) => {
                 output.extend_from_slice(&[0x2C, attrs.len() as u8]);
                 for attr in attrs {
-                    attr.encode_into(&mut* output);
+                    attr.encode_into(&mut *output);
                 }
             }
-            WriteOrder::InsertCursor(addr) => output.extend_from_slice(&[0x11, (addr >> 8) as u8, (addr & 0xff) as u8]),
-            WriteOrder::ProgramTab => output.push(0x05),
-            WriteOrder::RepeatToAddress(addr, ch) => {
-                output.extend_from_slice(&[0x3C, (addr >> 8) as u8, (addr & 0xff) as u8, crate::encoding::cp037::ENCODE_TBL[*ch as usize]])
+            WriteOrder::InsertCursor(addr) => {
+                output.extend_from_slice(&[0x11, (addr >> 8) as u8, (addr & 0xff) as u8])
             }
+            WriteOrder::ProgramTab => output.push(0x05),
+            WriteOrder::RepeatToAddress(addr, ch) => output.extend_from_slice(&[
+                0x3C,
+                (addr >> 8) as u8,
+                (addr & 0xff) as u8,
+                crate::encoding::cp037::ENCODE_TBL[*ch as usize],
+            ]),
             WriteOrder::EraseUnprotectedToAddress(addr) => {
                 output.extend_from_slice(&[0x12, (addr >> 8) as u8, (addr & 0xff) as u8])
             }
@@ -153,9 +159,7 @@ pub struct IncomingRecord {
 fn parse_addr(encoded: &[u8]) -> Result<u16, StreamFormatError> {
     match encoded[0] >> 6 {
         0b00 => Ok(((encoded[0] as u16) << 8) + encoded[1] as u16),
-        0b01 | 0b11 => {
-            Ok((encoded[0] as u16 & 0x3F) << 6 | (encoded[1] as u16 & 0x3F))
-        }
+        0b01 | 0b11 => Ok((encoded[0] as u16 & 0x3F) << 6 | (encoded[1] as u16 & 0x3F)),
         _ => Err(StreamFormatError::InvalidData),
     }
 }
@@ -169,11 +173,7 @@ impl IncomingRecord {
         let aid = AID::try_from(record[0])?;
         let addr = parse_addr(&record[1..3])?;
 
-        let mut result = Self {
-            aid,
-            addr,
-            orders: vec![]
-        };
+        let mut result = Self { aid, addr, orders: vec![] };
 
         record = &record[3..];
 
@@ -181,12 +181,12 @@ impl IncomingRecord {
             match record[0] {
                 0x1D => {
                     ensure!(record.len() >= 2, UnexpectedEORSnafu);
-                    result.orders.push(
-                        WriteOrder::StartField(FieldAttribute::from_bits(record[1] & 0x3F)
-                            .ok_or(StreamFormatError::InvalidData)?));
+                    result.orders.push(WriteOrder::StartField(
+                        FieldAttribute::from_bits(record[1] & 0x3F)
+                            .ok_or(StreamFormatError::InvalidData)?,
+                    ));
                     record = &record[2..];
-
-                },
+                }
                 0x29 => {
                     ensure!(record.len() >= 2, UnexpectedEORSnafu);
                     let (header, body) = record.split_at(2);
@@ -195,13 +195,13 @@ impl IncomingRecord {
                     let (attrs, rest) = body.split_at(2 * count);
                     record = rest;
 
-                    result.orders.push(
-                        WriteOrder::StartFieldExtended(
-                            attrs.chunks(2)
-                            .map(ExtendedFieldAttribute::try_from)
-                                .collect::<Result<Vec<ExtendedFieldAttribute>, StreamFormatError>>()?
-                        )
-                    )
+                    result.orders.push(WriteOrder::StartFieldExtended(
+                        attrs.chunks(2).map(ExtendedFieldAttribute::try_from).collect::<Result<
+                            Vec<ExtendedFieldAttribute>,
+                            StreamFormatError,
+                        >>(
+                        )?,
+                    ))
                 }
                 0x11 => {
                     ensure!(record.len() >= 3, UnexpectedEORSnafu);
@@ -210,7 +210,9 @@ impl IncomingRecord {
                 }
                 0x28 => {
                     ensure!(record.len() >= 3, UnexpectedEORSnafu);
-                    result.orders.push(WriteOrder::SetAttribute(ExtendedFieldAttribute::try_from(&record[1..3])?));
+                    result.orders.push(WriteOrder::SetAttribute(ExtendedFieldAttribute::try_from(
+                        &record[1..3],
+                    )?));
                     record = &record[3..];
                 }
                 0x2C => {
@@ -221,13 +223,13 @@ impl IncomingRecord {
                     let (attrs, rest) = body.split_at(2 * count);
                     record = rest;
 
-                    result.orders.push(
-                        WriteOrder::ModifyField(
-                            attrs.chunks(2)
-                                .map(ExtendedFieldAttribute::try_from)
-                                .collect::<Result<Vec<ExtendedFieldAttribute>, StreamFormatError>>()?
-                        )
-                    )
+                    result.orders.push(WriteOrder::ModifyField(
+                        attrs.chunks(2).map(ExtendedFieldAttribute::try_from).collect::<Result<
+                            Vec<ExtendedFieldAttribute>,
+                            StreamFormatError,
+                        >>(
+                        )?,
+                    ))
                 }
                 0x13 => {
                     ensure!(record.len() >= 3, UnexpectedEORSnafu);
@@ -248,7 +250,9 @@ impl IncomingRecord {
                 }
                 0x12 => {
                     ensure!(record.len() >= 3, UnexpectedEORSnafu);
-                    result.orders.push(WriteOrder::EraseUnprotectedToAddress(parse_addr(&record[1..3])?));
+                    result
+                        .orders
+                        .push(WriteOrder::EraseUnprotectedToAddress(parse_addr(&record[1..3])?));
                     record = &record[3..];
                 }
                 0x08 => {
@@ -264,8 +268,8 @@ impl IncomingRecord {
                         .collect();
                     result.orders.push(WriteOrder::SendText(data));
                     record = &record[len..];
-                },
-                _ => return Err(StreamFormatError::InvalidData)
+                }
+                _ => return Err(StreamFormatError::InvalidData),
             }
         }
         Ok(result)

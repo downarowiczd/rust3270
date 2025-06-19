@@ -1,5 +1,10 @@
 use bitflags::bitflags;
-use crate::server::{color::Color, highlighting::Highlighting, stream::StreamFormatError, transparency::Transparency, wcc::{make_ascii_translatable, FieldAttribute}};
+
+use crate::server::color::Color;
+use crate::server::highlighting::Highlighting;
+use crate::server::stream::StreamFormatError;
+use crate::server::transparency::Transparency;
+use crate::server::wcc::{FieldAttribute, make_ascii_translatable};
 
 bitflags! {
     #[derive(Debug, Clone, Hash)]
@@ -44,14 +49,20 @@ impl TryFrom<&[u8]> for ExtendedFieldAttribute {
         Ok(match (value[0], value[1]) {
             (0x00, 0x00) => ExtendedFieldAttribute::AllAttributes,
             (0x00, _) => return Err(StreamFormatError::InvalidData),
-            (0xC0, fa) => ExtendedFieldAttribute::FieldAttribute(FieldAttribute::from_bits(fa & 0x3F).ok_or(StreamFormatError::InvalidData)?),
+            (0xC0, fa) => ExtendedFieldAttribute::FieldAttribute(
+                FieldAttribute::from_bits(fa & 0x3F).ok_or(StreamFormatError::InvalidData)?,
+            ),
             (0x41, v) => ExtendedFieldAttribute::ExtendedHighlighting(v.try_into()?),
             (0x45, v) => ExtendedFieldAttribute::BackgroundColor(v.try_into()?),
             (0x42, v) => ExtendedFieldAttribute::ForegroundColor(v.try_into()?),
             (0x43, v) => ExtendedFieldAttribute::CharacterSet(v),
-            (0xC2, v) => ExtendedFieldAttribute::FieldOutlining(FieldOutline::from_bits(v).ok_or(StreamFormatError::InvalidData)?),
+            (0xC2, v) => ExtendedFieldAttribute::FieldOutlining(
+                FieldOutline::from_bits(v).ok_or(StreamFormatError::InvalidData)?,
+            ),
             (0x46, v) => ExtendedFieldAttribute::Transparency(v.try_into()?),
-            (0xC1, v) => ExtendedFieldAttribute::FieldValidation(FieldValidation::from_bits(v).ok_or(StreamFormatError::InvalidData)?),
+            (0xC1, v) => ExtendedFieldAttribute::FieldValidation(
+                FieldValidation::from_bits(v).ok_or(StreamFormatError::InvalidData)?,
+            ),
             _ => return Err(StreamFormatError::InvalidData),
         })
     }
@@ -60,8 +71,10 @@ impl TryFrom<&[u8]> for ExtendedFieldAttribute {
 impl ExtendedFieldAttribute {
     pub fn encoded(self) -> (u8, u8) {
         match self {
-            ExtendedFieldAttribute::AllAttributes => (0x00,0x00),
-            ExtendedFieldAttribute::FieldAttribute(fa) => (0xC0, make_ascii_translatable(fa.bits())),
+            ExtendedFieldAttribute::AllAttributes => (0x00, 0x00),
+            ExtendedFieldAttribute::FieldAttribute(fa) => {
+                (0xC0, make_ascii_translatable(fa.bits()))
+            }
             ExtendedFieldAttribute::ExtendedHighlighting(fa) => (0x41, fa.into()),
             ExtendedFieldAttribute::BackgroundColor(c) => (0x45, c.into()),
             ExtendedFieldAttribute::ForegroundColor(c) => (0x42, c.into()),
@@ -76,11 +89,10 @@ impl ExtendedFieldAttribute {
         let (typ, val) = self.clone().encoded();
         output.extend_from_slice(&[typ, val]);
     }
-
 }
 
 impl Into<ExtendedFieldAttribute> for &ExtendedFieldAttribute {
     fn into(self) -> ExtendedFieldAttribute {
-            self.clone()
-        }
+        self.clone()
+    }
 }
