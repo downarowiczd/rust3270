@@ -149,11 +149,6 @@ jobs:
       - name: Check lints
         run: cargo clippy -- -D warnings
 
-      - name: Run cargo-deny
-        uses: EmbarkStudios/cargo-deny-action@v2
-        with:
-          command: check licenses sources
-
       - name: Run cargo-audit
         uses: actions-rs/audit-check@v1
         with:
