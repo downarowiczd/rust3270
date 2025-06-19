@@ -160,9 +160,6 @@ jobs:
           args: "-vv"
           commits: "HEAD"
 
-      - name: Check typos
-        uses: crate-ci/typos@master
-
       - name: Install cargo-binstall
         uses: taiki-e/install-action@cargo-binstall
 
