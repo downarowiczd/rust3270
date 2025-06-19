@@ -141,10 +141,10 @@ impl WriteCommand {
     }
 }
 
-impl Into<Vec<u8>> for &WriteCommand {
-    fn into(self) -> Vec<u8> {
+impl From<&WriteCommand> for Vec<u8> {
+    fn from(val: &WriteCommand) -> Self {
         let mut result = vec![];
-        self.serialize(&mut result);
+        val.serialize(&mut result);
         result
     }
 }
@@ -177,7 +177,7 @@ impl IncomingRecord {
 
         record = &record[3..];
 
-        while record.len() > 0 {
+        while !record.is_empty() {
             match record[0] {
                 0x1D => {
                     ensure!(record.len() >= 2, UnexpectedEORSnafu);

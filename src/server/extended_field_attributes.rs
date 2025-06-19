@@ -78,7 +78,7 @@ impl ExtendedFieldAttribute {
             ExtendedFieldAttribute::ExtendedHighlighting(fa) => (0x41, fa.into()),
             ExtendedFieldAttribute::BackgroundColor(c) => (0x45, c.into()),
             ExtendedFieldAttribute::ForegroundColor(c) => (0x42, c.into()),
-            ExtendedFieldAttribute::CharacterSet(cs) => (0x43, cs.into()),
+            ExtendedFieldAttribute::CharacterSet(cs) => (0x43, cs),
             ExtendedFieldAttribute::FieldOutlining(fo) => (0xC2, fo.bits()),
             ExtendedFieldAttribute::Transparency(v) => (0x46, v.into()),
             ExtendedFieldAttribute::FieldValidation(v) => (0xC1, v.bits()),
@@ -91,8 +91,8 @@ impl ExtendedFieldAttribute {
     }
 }
 
-impl Into<ExtendedFieldAttribute> for &ExtendedFieldAttribute {
-    fn into(self) -> ExtendedFieldAttribute {
-        self.clone()
+impl From<&ExtendedFieldAttribute> for ExtendedFieldAttribute {
+    fn from(val: &ExtendedFieldAttribute) -> Self {
+        val.clone()
     }
 }

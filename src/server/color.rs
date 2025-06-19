@@ -21,9 +21,9 @@ pub enum Color {
     White,
 }
 
-impl Into<u8> for Color {
-    fn into(self) -> u8 {
-        match self {
+impl From<Color> for u8 {
+    fn from(val: Color) -> Self {
+        match val {
             Color::Default => 0x00,
             Color::NeutralBG => 0xF0,
             Color::Blue => 0xF1,

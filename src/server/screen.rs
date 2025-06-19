@@ -23,8 +23,8 @@ pub enum FieldData<'a> {
 impl<'a> AsRef<str> for FieldData<'a> {
     fn as_ref(&self) -> &str {
         match self {
-            FieldData::RO(data) => *data,
-            FieldData::RW(data) => &**data,
+            FieldData::RO(data) => data,
+            FieldData::RW(data) => data,
         }
     }
 }
@@ -86,7 +86,7 @@ impl<'a> Screen<'a> {
                         let Address { row, col } = field.address;
                         let bufaddr = acalc.encode_address(row, col);
 
-                        let ro = if let FieldData::RO(_) = field.data { true } else { false };
+                        let ro = matches!(field.data, FieldData::RO(_));
 
                         let mut field_attr = field.attrs.clone();
                         let mut have_fa = false;
@@ -141,11 +141,9 @@ impl<'a> Screen<'a> {
                     for field in self.fields.iter_mut() {
                         if acalc.encode_address(field.address.row, field.address.col)
                             == incoming_addr - 1
-                        {
-                            if let FieldData::RW(ref mut data) = field.data {
+                            && let FieldData::RW(ref mut data) = field.data {
                                 **data = text.clone();
                             }
-                        }
                     }
                 }
                 _ => {}

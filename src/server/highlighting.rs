@@ -24,8 +24,8 @@ impl TryFrom<u8> for Highlighting {
     }
 }
 
-impl Into<u8> for Highlighting {
-    fn into(self) -> u8 {
-        self as u8
+impl From<Highlighting> for u8 {
+    fn from(val: Highlighting) -> Self {
+        val as u8
     }
 }

@@ -75,7 +75,7 @@ impl Session {
                     }
                     TelnetEvents::IAC(TelnetIAC { command: tn_cmd::EOR }) => self
                         .incoming_records
-                        .push_back(std::mem::replace(&mut self.cur_record, Vec::new())),
+                        .push_back(std::mem::take(&mut self.cur_record)),
                     TelnetEvents::IAC(iac) => debug_msg!("Unknown IAC {}", iac.command),
                     TelnetEvents::Negotiation(TelnetNegotiation {
                         command: tn_cmd::WILL,
@@ -139,8 +139,7 @@ impl Session {
 
         self.process_events(initial_negotiation)?;
 
-        let mut idata = Vec::with_capacity(2000);
-        idata.resize(idata.capacity(), 0);
+        let mut idata = vec![0; 2000];
 
         self.stream.set_read_timeout(Some(Duration::from_secs(5)))?;
 
