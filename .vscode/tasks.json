@@ -17,6 +17,27 @@
             "problemMatcher": [
                 "$rustc"
             ]
+        },
+        {
+            "label": "rust: cargo build --example demo",
+            "type": "process",
+            "command": "cargo",
+            "args": [
+                "build",
+                "--package",
+                "rust3270",
+                "--example",
+                "demo",
+                "--features",
+                "rust3270/debug-msg-print"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$rustc"
+            ]
         }
     ]
 }

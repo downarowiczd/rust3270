@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Demo Debug (Windows)",
+            "preLaunchTask": "rust: cargo build --example demo",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "console": "externalTerminal",
+            "program": "${workspaceFolder}/target/debug/examples/demo.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+            ],
+        },
+        {
+            "name": "Launch Demo Debug (GDB/LLDB)",
+            "preLaunchTask": "rust: cargo build --example demo",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/examples/demo.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "${workspaceFolder}/src/bin/edit/main.rs"
+            ],
+        }
+    ]
+}

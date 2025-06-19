@@ -10,7 +10,7 @@ repository = "https://github.com/downarowiczd/rust3270"
 homepage = "https://github.com/downarowiczd/rust3270"
 
 [features]
-debug-latency = []
+debug-msg-print = []
 
 [profile.release]
 codegen-units = 1           # reduces binary size by ~2%
@@ -23,3 +23,11 @@ strip = "symbols"           # See split-debuginfo - allows us to drop the size b
 incremental = true          # Improves re-compile times
 
 [dependencies]
+bitflags = "2.9.1"
+libtelnet-rs = "2.0.0"
+snafu = "0.8.6"
+
+[dev-dependencies]
+anyhow = "1.0.98"
+hex = "0.4.3"
+structopt = "0.3.26"
