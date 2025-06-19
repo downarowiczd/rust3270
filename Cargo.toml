@@ -1,7 +1,7 @@
 [package]
 name = "rust3270"
 description = "rust3270 is a terminal server interface to the IBM 3270 terminal protocol, written in Rust."
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Dominik Downarowicz <dominik@downardo.at>"]
 edition = "2024"
 readme = "README.MD"
