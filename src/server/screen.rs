@@ -141,9 +141,10 @@ impl<'a> Screen<'a> {
                     for field in self.fields.iter_mut() {
                         if acalc.encode_address(field.address.row, field.address.col)
                             == incoming_addr - 1
-                            && let FieldData::RW(ref mut data) = field.data {
-                                **data = text.clone();
-                            }
+                            && let FieldData::RW(ref mut data) = field.data
+                        {
+                            **data = text.clone();
+                        }
                     }
                 }
                 _ => {}

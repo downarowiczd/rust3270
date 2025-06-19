@@ -73,9 +73,9 @@ impl Session {
                     TelnetEvents::DataReceive(ref mut data) => {
                         self.cur_record.extend_from_slice(&data[..])
                     }
-                    TelnetEvents::IAC(TelnetIAC { command: tn_cmd::EOR }) => self
-                        .incoming_records
-                        .push_back(std::mem::take(&mut self.cur_record)),
+                    TelnetEvents::IAC(TelnetIAC { command: tn_cmd::EOR }) => {
+                        self.incoming_records.push_back(std::mem::take(&mut self.cur_record))
+                    }
                     TelnetEvents::IAC(iac) => debug_msg!("Unknown IAC {}", iac.command),
                     TelnetEvents::Negotiation(TelnetNegotiation {
                         command: tn_cmd::WILL,
