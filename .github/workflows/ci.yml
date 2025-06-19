@@ -142,6 +142,10 @@ jobs:
       - name: Check file formatting
         run: editorconfig-checker
 
+      - name: Install rust clippy
+        run: |
+          rustup component add --toolchain nightly clippy  
+
       - name: Check lints
         run: cargo clippy -- -D warnings
 
