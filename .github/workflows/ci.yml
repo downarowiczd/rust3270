@@ -153,9 +153,3 @@ jobs:
         uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run committed
-        uses: crate-ci/committed@master
-        with:
-          args: "-vv"
-          commits: "HEAD"
