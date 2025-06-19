@@ -129,6 +129,10 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Instal cargo-fmt nightly
+        run: |
+          rustup component add --toolchain nightly rustfmt
+
       - name: Check code formatting
         run: cargo fmt --all -- --check
 
